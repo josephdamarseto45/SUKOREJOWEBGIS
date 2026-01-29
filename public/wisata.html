@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wisata Desa Sukorejo - Peta Interaktif</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="js/wallpaper.js" defer></script>
+</head>
+<body>
+    <!-- Complete redesign with single map view and interactive sidebar -->
+    <div class="wisata-map-container">
+        <!-- Header -->
+        <header class="wisata-header">
+            <div class="wisata-header-left">
+                <a href="index.html" class="btn-back-wisata">← Kembali</a>
+            </div>
+            <h1 class="wisata-title">Jelajahi Wisata Desa Sukorejo</h1>
+            <div class="wisata-header-right">
+                <a href="admin-wisata.html" class="btn-admin-wisata">⚙ Admin</a>
+            </div>
+        </header>
+
+        <!-- Main Content: Sidebar + Map -->
+        <div class="wisata-content">
+            <!-- Sidebar -->
+            <aside class="wisata-sidebar">
+                <!-- Search & Filter -->
+                <div class="wisata-search-section">
+                    <h3>Cari Destinasi</h3>
+                    <input 
+                        type="text" 
+                        id="searchWisata" 
+                        placeholder="Cari nama wisata..."
+                        class="wisata-search-input"
+                    >
+                    <select id="filterKategori" class="wisata-filter-select">
+                        <option value="">Semua Kategori</option>
+                        <option value="Alam">🌳 Wisata Alam</option>
+                        <option value="Budaya">🎭 Wisata Budaya</option>
+                        <option value="Kuliner">🍴 Wisata Kuliner</option>
+                        <option value="Edukasi">📚 Wisata Edukasi</option>
+                        <option value="Religi">🕌 Wisata Religi</option>
+                    </select>
+                    <div class="wisata-search-actions">
+                        <button onclick="window.searchWisataMap()" class="btn-search-wisata">🔍 Cari</button>
+                        <button onclick="window.resetWisataSearch()" class="btn-reset-wisata">↺ Reset</button>
+                    </div>
+                    
+                    <!-- Route Controls -->
+                    <div class="wisata-route-controls">
+                        <button onclick="window.getUserLocationWisataMap()" class="btn-location-wisata">📍 Lokasi Saya</button>
+                        <button onclick="window.clearWisataRoute()" class="btn-clear-route-wisata">✕ Hapus Rute</button>
+                    </div>
+                </div>
+
+                <!-- List of Destinations -->
+                <div class="wisata-list-section">
+                    <h3>Daftar Destinasi <span id="wisataCount" class="count-badge">0</span></h3>
+                    <div id="wisataList" class="wisata-list">
+                        <!-- List items will be loaded here -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Map -->
+            <div class="wisata-map-wrapper">
+                <div id="wisataMap" class="wisata-map"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data-wisata.js"></script>
+    <script src="js/wisata.js"></script>
+</body>
+</html>

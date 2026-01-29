@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "nama": "Warung Makan Bu Siti",
+    "jenis": "Kuliner",
+    "alamat": "Jl. Raya Sukorejo No. 12",
+    "lat": -7.4186,
+    "lng": 110.9758,
+    "deskripsi": "Warung makan dengan menu masakan tradisional Jawa yang lezat"
+  },
+  {
+    "id": 2,
+    "nama": "Kerajinan Bambu Pak Agus",
+    "jenis": "Kerajinan",
+    "alamat": "Dsn. Krajan, Sukorejo",
+    "lat": -7.4195,
+    "lng": 110.977,
+    "deskripsi": "Produksi kerajinan bambu seperti anyaman dan furniture"
+  },
+  {
+    "id": 3,
+    "nama": "Toko Sembako Berkah",
+    "jenis": "Jasa",
+    "alamat": "Jl. Masjid Sukorejo",
+    "lat": -7.4175,
+    "lng": 110.9745,
+    "deskripsi": "Toko sembako lengkap dengan harga terjangkau"
+  }
+]

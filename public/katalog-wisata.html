@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Wisata - Desa Sukorejo</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/image-slider.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/wallpaper.js" defer></script>
+    <style>
+        .catalog-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .catalog-header {
+            background: linear-gradient(135deg, #7fa998 0%, #6a8f7f 100%);
+            color: white;
+            padding: 48px 32px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .catalog-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .catalog-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+        .catalog-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .filter-box {
+            min-width: 180px;
+        }
+        .filter-box select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            height: 44px;
+        }
+        .btn-action {
+            background: #7fa998;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            min-width: 140px;
+            height: 44px;
+            box-sizing: border-box;
+        }
+        .btn-action:hover {
+            background: #6a8f7f;
+            transform: translateY(-1px);
+        }
+        .btn-back-home {
+            background: #7fa998;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .btn-back-home:hover {
+            background: #6a8f7f;
+            transform: translateY(-1px);
+        }
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        .wisata-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+        .wisata-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            border-color: #22c55e;
+        }
+        .wisata-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #e8f4f8;
+        }
+        .wisata-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .wisata-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+        .wisata-description {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .wisata-location {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #475569;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+        .wisata-location span:first-child {
+            color: #f472b6;
+            flex-shrink: 0;
+        }
+        .wisata-contact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .wisata-contact span:first-child {
+            color: #8b5cf6;
+            flex-shrink: 0;
+        }
+        .wisata-contact a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+        .wisata-contact a:hover {
+            text-decoration: underline;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .modal-header h2 {
+            font-size: 1.5rem;
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+        .btn-add-wisata {
+            background: #7fa998;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-add-wisata:hover {
+            background: #6a8f7f;
+            transform: translateY(-1px);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .btn-submit {
+            background: #7fa998;
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+        }
+        .btn-submit:hover {
+            background: #6a8f7f;
+        }
+        #mapPickerWisataAdd {
+            height: 350px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="catalog-container">
+        <a href="index.html" class="btn-back-home">← Kembali ke Beranda</a>
+        
+        <div class="catalog-header">
+            <h1>Katalog Wisata</h1>
+            <p>Jelajahi destinasi wisata menarik di Desa Sukorejo</p>
+        </div>
+
+        <div class="catalog-actions">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cari destinasi wisata..." onkeyup="filterWisata()">
+            </div>
+            <div class="filter-box">
+                <select id="categoryFilter" onchange="filterWisata()">
+                    <option value="">Semua Kategori</option>
+                    <option value="Alam">Wisata Alam</option>
+                    <option value="Budaya">Wisata Budaya</option>
+                    <option value="Kuliner">Wisata Kuliner</option>
+                    <option value="Edukasi">Wisata Edukasi</option>
+                    <option value="Religi">Wisata Religi</option>
+                </select>
+            </div>
+            <a href="wisata.html" class="btn-action">Lihat Peta</a>
+            <button class="btn-action" onclick="openAddWisataModal()">+ Tambah Wisata</button>
+        </div>
+
+        <div class="catalog-grid" id="catalogGrid">
+            <!-- Wisata cards will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Add Wisata Modal -->
+    <div class="modal" id="addWisataModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tambah Destinasi Wisata Baru</h2>
+                <button class="btn-close" onclick="closeAddWisataModal()">&times;</button>
+            </div>
+            <form onsubmit="addWisata(event)">
+                <div class="form-group">
+                    <label>Nama Destinasi *</label>
+                    <input type="text" id="wisataName" required>
+                </div>
+                <div class="form-group">
+                    <label>Kategori *</label>
+                    <select id="wisataCategory" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="Alam">Wisata Alam</option>
+                        <option value="Budaya">Wisata Budaya</option>
+                        <option value="Kuliner">Wisata Kuliner</option>
+                        <option value="Edukasi">Wisata Edukasi</option>
+                        <option value="Religi">Wisata Religi</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi *</label>
+                    <textarea id="wisataDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Lokasi (Klik peta untuk memilih)</label>
+                    <input type="text" id="wisataLat" placeholder="Latitude" readonly required>
+                    <input type="text" id="wisataLng" placeholder="Longitude" readonly required style="margin-top: 8px;">
+                    <button type="button" onclick="getMyLocationWisataAdd()" style="margin-top: 8px; background: #7fa998; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">
+                        Lihat Lokasi Saya
+                    </button>
+                    <div id="mapPickerWisataAdd"></div>
+                </div>
+                <div class="form-group">
+                    <label>Jam Operasional</label>
+                    <input type="text" id="wisataJamOperasional" placeholder="Contoh: 08:00 - 17:00">
+                </div>
+                <div class="form-group">
+                    <label>Harga Tiket</label>
+                    <input type="text" id="wisataHargaTiket" placeholder="Contoh: Rp 5.000">
+                </div>
+                <div class="form-group">
+                    <label>Nomor HP/WhatsApp</label>
+                    <input type="text" id="wisataContact" placeholder="Contoh: 081234567890">
+                </div>
+                <div class="form-group">
+                    <label>Foto Wisata (bisa pilih beberapa)</label>
+                    <input type="file" id="wisataImage" accept="image/*" multiple onchange="previewWisataImages(event)">
+                    <div id="wisataImagePreview" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Video Wisata (opsional, bisa pilih beberapa)</label>
+                    <input type="file" id="wisataVideo" accept="video/*" multiple onchange="previewWisataVideos(event)">
+                    <div id="wisataVideoPreview" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Format: MP4, WebM, atau OGG. Maksimal 50MB per video</p>
+                </div>
+                <button type="submit" class="btn-submit">Tambah Wisata</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Wisata Modal -->
+    <div class="modal" id="editWisataModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Destinasi Wisata</h2>
+                <button class="btn-close" onclick="closeEditWisataModal()">&times;</button>
+            </div>
+            <form onsubmit="updateWisata(event)">
+                <input type="hidden" id="editWisataId">
+                <div class="form-group">
+                    <label>Nama Destinasi *</label>
+                    <input type="text" id="editWisataName" required>
+                </div>
+                <div class="form-group">
+                    <label>Kategori *</label>
+                    <select id="editWisataCategory" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="Alam">Wisata Alam</option>
+                        <option value="Budaya">Wisata Budaya</option>
+                        <option value="Kuliner">Wisata Kuliner</option>
+                        <option value="Edukasi">Wisata Edukasi</option>
+                        <option value="Religi">Wisata Religi</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi *</label>
+                    <textarea id="editWisataDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Lokasi (Klik peta untuk memilih)</label>
+                    <input type="text" id="editWisataLat" placeholder="Latitude" readonly required>
+                    <input type="text" id="editWisataLng" placeholder="Longitude" readonly required style="margin-top: 8px;">
+                    <button type="button" onclick="getMyLocationWisataEdit()" style="margin-top: 8px; background: #7fa998; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">
+                        Lihat Lokasi Saya
+                    </button>
+                    <div id="mapPickerWisataEdit" style="height: 350px; width: 100%; border-radius: 8px; margin-top: 10px;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Jam Operasional</label>
+                    <input type="text" id="editWisataJamOperasional" placeholder="Contoh: 08:00 - 17:00">
+                </div>
+                <div class="form-group">
+                    <label>Harga Tiket</label>
+                    <input type="text" id="editWisataHargaTiket" placeholder="Contoh: Rp 5.000">
+                </div>
+                <div class="form-group">
+                    <label>Nomor HP/WhatsApp</label>
+                    <input type="text" id="editWisataContact" placeholder="Contoh: 081234567890">
+                </div>
+                <div class="form-group">
+                    <label>Foto Wisata (bisa pilih beberapa)</label>
+                    <input type="file" id="editWisataImage" accept="image/*" multiple onchange="previewEditWisataImages(event)">
+                    <div id="editWisataImagePreview" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Video Wisata (opsional, bisa pilih beberapa)</label>
+                    <input type="file" id="editWisataVideo" accept="video/*" multiple onchange="previewEditWisataVideos(event)">
+                    <div id="editWisataVideoPreview" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Format: MP4, WebM, atau OGG. Maksimal 50MB per video</p>
+                </div>
+                <button type="submit" class="btn-submit">Simpan Perubahan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Wisata Detail Modal -->
+    <div class="modal" id="wisataDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailTitle">Detail Wisata</h2>
+                <button class="btn-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div id="detailContent">
+                <!-- Content will be filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Zoom Modal -->
+    <div class="modal" id="imageZoomModal" style="background: rgba(0,0,0,0.9);">
+        <button class="btn-close" onclick="closeImageZoom()" style="position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; z-index: 1001;">&times;</button>
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; padding: 40px;">
+            <img id="zoomedImage" style="max-width: 90%; max-height: 90%; border-radius: 8px;">
+        </div>
+    </div>
+
+    <script src="js/media-helper.js"></script>
+    <script src="js/image-slider.js"></script>
+    <script src="js/data-wisata.js"></script>
+    <script src="js/katalog-wisata.js"></script>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Produk UMKM - Desa Sukorejo</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/image-slider.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/wallpaper.js" defer></script>
+    <style>
+        .catalog-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .catalog-header {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 48px 32px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .catalog-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .catalog-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+        .catalog-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .btn-action {
+            background: #059669;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            min-width: 140px;
+            height: 44px;
+            box-sizing: border-box;
+        }
+        .btn-action:hover {
+            background: #047857;
+            transform: translateY(-1px);
+        }
+        .filter-box {
+            min-width: 180px;
+        }
+        .filter-box select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            height: 44px;
+        }
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            border-color: #059669;
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+        .product-content {
+            padding: 20px;
+        }
+        .product-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        .product-description {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .product-location {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #475569;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+        .product-contact {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #059669;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .product-contact a {
+            color: #059669;
+            text-decoration: none;
+        }
+        .product-contact a:hover {
+            text-decoration: underline;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .modal-header h2 {
+            font-size: 1.5rem;
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .btn-submit {
+            background: #059669;
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            background: #059669;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .back-button:hover {
+            background: #047857;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+        }
+        #mapPickerUMKMAdd {
+            height: 350px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="catalog-container">
+        <a href="index.html" class="back-button">← Kembali ke Beranda</a>
+        
+        <div class="catalog-header">
+            <h1>Katalog Produk UMKM</h1>
+            <p>Produk berkualitas dari UMKM Desa Sukorejo</p>
+        </div>
+
+        <div class="catalog-actions">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cari produk..." onkeyup="filterProducts()">
+            </div>
+            <div class="filter-box">
+                <select id="categoryFilter" onchange="filterProducts()">
+                    elect">
+                        <option value="">Semua Jenis</option>
+                        <option value="Kuliner">🍜 Kuliner</option>
+                        <option value="Kerajinan">🎨 Kerajinan</option>
+                        <option value="Pertanian">🌾 Pertanian</option>
+                        <option value="Jasa">🛠 Jasa</option>
+                        <option value="Lainnya">📍 Lainnya</option>
+                </select>
+            </div>
+            <a href="map.html" class="btn-action">Lihat Peta</a>
+            <button class="btn-action" onclick="openAddModal()">+ Tambah Produk</button>
+        </div>
+
+        <div class="catalog-grid" id="catalogGrid">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal" id="addProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tambah Produk Baru</h2>
+                <button class="btn-close" onclick="closeAddModal()">&times;</button>
+            </div>
+            <form onsubmit="addProduct(event)">
+                <div class="form-group">
+                    <label>Nama Produk *</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label>Kategori *</label>
+                    <select id="productCategory" required>
+                        <option value="">Pilih Kategori</option>
+                        elect">
+                        <option value="Kuliner">🍜 Kuliner</option>
+                        <option value="Kerajinan">🎨 Kerajinan</option>
+                        <option value="Pertanian">🌾 Pertanian</option>
+                        <option value="Jasa">🛠 Jasa</option>
+                        <option value="Lainnya">📍 Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi *</label>
+                    <textarea id="productDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Lokasi (Klik peta untuk memilih)</label>
+                    <input type="text" id="productLat" placeholder="Latitude" readonly required>
+                    <input type="text" id="productLng" placeholder="Longitude" readonly required style="margin-top: 8px;">
+                    <input type="text" id="productLocation" placeholder="Nama Lokasi (Contoh: Desa Sukorejo)" required style="margin-top: 8px;">
+                    <button type="button" onclick="getMyLocationAdd()" style="margin-top: 8px; background: #059669; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">
+                        Lihat Lokasi Saya
+                    </button>
+                    <div id="mapPickerUMKMAdd"></div>
+                </div>
+                <div class="form-group">
+                    <label>Nomor HP/WhatsApp *</label>
+                    <input type="text" id="productContact" placeholder="Contoh: 081234567890" required>
+                </div>
+                <div class="form-group">
+                    <label>Gambar Produk (bisa pilih beberapa)</label>
+                    <input type="file" id="productImage" accept="image/*" multiple onchange="previewImages(event)">
+                    <div id="imagePreview" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Video Produk (opsional, bisa pilih beberapa)</label>
+                    <input type="file" id="productVideo" accept="video/*" multiple onchange="previewVideos(event)">
+                    <div id="videoPreview" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Format: MP4, WebM, atau OGG. Maksimal 50MB per video</p>
+                </div>
+                <button type="submit" class="btn-submit">Tambah Produk</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div class="modal" id="productDetailModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="detailTitle">Detail Produk</h2>
+                <button class="btn-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div id="detailContent">
+                <!-- Content will be filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div class="modal" id="editProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Produk</h2>
+                <button class="btn-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form onsubmit="updateProduct(event)">
+                <input type="hidden" id="editProductId">
+                <div class="form-group">
+                    <label>Nama Produk *</label>
+                    <input type="text" id="editProductName" required>
+                </div>
+                <div class="form-group">
+                    <label>Kategori *</label>
+                    <select id="editProductCategory" required>
+                        <option value="">Pilih Kategori</option>
+                        elect">
+                        <option value="Kuliner">🍜 Kuliner</option>
+                        <option value="Kerajinan">🎨 Kerajinan</option>
+                        <option value="Pertanian">🌾 Pertanian</option>
+                        <option value="Jasa">🛠 Jasa</option>
+                        <option value="Lainnya">📍 Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi *</label>
+                    <textarea id="editProductDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Lokasi (Klik peta untuk memilih)</label>
+                    <input type="text" id="editProductLat" placeholder="Latitude" readonly required>
+                    <input type="text" id="editProductLng" placeholder="Longitude" readonly required style="margin-top: 8px;">
+                    <input type="text" id="editProductLocation" placeholder="Nama Lokasi" required style="margin-top: 8px;">
+                    <button type="button" onclick="getMyLocationEdit()" style="margin-top: 8px; background: #059669; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">
+                        Lihat Lokasi Saya
+                    </button>
+                    <div id="mapPickerUMKMEdit" style="height: 350px; width: 100%; border-radius: 8px; margin-top: 10px;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Nomor HP/WhatsApp *</label>
+                    <input type="text" id="editProductContact" placeholder="Contoh: 081234567890" required>
+                </div>
+                <div class="form-group">
+                    <label>Gambar Produk (bisa pilih beberapa)</label>
+                    <input type="file" id="editProductImage" accept="image/*" multiple onchange="previewEditImages(event)">
+                    <div id="editImagePreview" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Video Produk (opsional, bisa pilih beberapa)</label>
+                    <input type="file" id="editProductVideo" accept="video/*" multiple onchange="previewEditVideos(event)">
+                    <div id="editVideoPreview" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Format: MP4, WebM, atau OGG. Maksimal 50MB per video</p>
+                </div>
+                <button type="submit" class="btn-submit">Simpan Perubahan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Zoom Modal -->
+    <div class="modal" id="imageZoomModal" style="background: rgba(0,0,0,0.9);">
+        <button class="btn-close" onclick="closeImageZoom()" style="position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; z-index: 1001;">&times;</button>
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; padding: 40px;">
+            <img id="zoomedImage" style="max-width: 90%; max-height: 90%; border-radius: 8px;">
+        </div>
+    </div>
+
+    <script src="js/media-helper.js"></script>
+    <script src="js/image-slider.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/katalog.js"></script>
+</body>
+</html>

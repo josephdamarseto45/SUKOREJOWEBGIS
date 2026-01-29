@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMKM Desa Sukorejo - Peta Interaktif</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="js/wallpaper.js" defer></script>
+</head>
+<body>
+    <!-- Complete redesign with single map view and interactive sidebar -->
+    <div class="wisata-map-container">
+        <!-- Header -->
+        <header class="wisata-header">
+            <div class="wisata-header-left">
+                <a href="index.html" class="btn-back-wisata">← Kembali</a>
+            </div>
+            <h1 class="wisata-title">Jelajahi UMKM Desa Sukorejo</h1>
+            <div class="wisata-header-right">
+                <a href="admin.html" class="btn-admin-wisata">⚙ Admin</a>
+            </div>
+        </header>
+
+        <!-- Main Content: Sidebar + Map -->
+        <div class="wisata-content">
+            <!-- Sidebar -->
+            <aside class="wisata-sidebar">
+                <!-- Search & Filter -->
+                <div class="wisata-search-section">
+                    <h3>Cari UMKM</h3>
+                    <input 
+                        type="text" 
+                        id="searchUMKM" 
+                        placeholder="Cari nama UMKM..."
+                        class="wisata-search-input"
+                    >
+                    <select id="filterJenis" class="wisata-filter-select">
+                        <option value="">Semua Jenis</option>
+                        <option value="Kuliner">🍜 Kuliner</option>
+                        <option value="Kerajinan">🎨 Kerajinan</option>
+                        <option value="Pertanian">🌾 Pertanian</option>
+                        <option value="Jasa">🛠 Jasa</option>
+                        <option value="Lainnya">📍 Lainnya</option>
+                    </select>
+                    <div class="wisata-search-actions">
+                        <button onclick="window.searchUMKMMap()" class="btn-search-wisata">🔍 Cari</button>
+                        <button onclick="window.resetUMKMSearch()" class="btn-reset-wisata">↺ Reset</button>
+                    </div>
+                    
+                    <!-- Route Controls -->
+                    <div class="wisata-route-controls">
+                        <button onclick="window.getUserLocationUMKMMap()" class="btn-location-wisata">📍 Lokasi Saya</button>
+                        <button onclick="window.clearUMKMRoute()" class="btn-clear-route-wisata">✕ Hapus Rute</button>
+                    </div>
+                </div>
+
+                <!-- List of UMKM -->
+                <div class="wisata-list-section">
+                    <h3>Daftar UMKM <span id="umkmCount" class="count-badge">0</span></h3>
+                    <div id="umkmList" class="wisata-list">
+                        <!-- List items will be loaded here -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Map -->
+            <div class="wisata-map-wrapper">
+                <div id="umkmMap" class="wisata-map"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/umkm-map.js"></script>
+</body>
+</html>
