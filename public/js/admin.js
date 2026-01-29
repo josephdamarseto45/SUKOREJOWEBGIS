@@ -1,6 +1,6 @@
 // Password admin - menggunakan Supabase database via API
 const ADMIN_API_BASE = "/api/admin/settings"
-let ADMIN_PASSCODE = "UMKMDESASUKOREJOMAJU" // Default fallback
+let ADMIN_PASSCODE = "UMKM2026" // Default fallback
 const CRUD_PASSCODE = "EDITUMKM" // Ganti dengan passcode yang Anda inginkan
 const EDIT_DELETE_PASSCODE = "DELETEUMKM" // Ganti dengan passcode yang Anda inginkan
 const AUTH_KEY = "admin_authenticated"

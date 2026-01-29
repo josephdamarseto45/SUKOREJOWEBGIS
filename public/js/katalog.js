@@ -1,6 +1,6 @@
 // Catalog Data Management - Connected to UMKM Map Database (data.js)
 // Functions used from data.js (loaded before this script): getAllUMKM, addNewUMKM, updateUMKMData, deleteUMKMData, getUMKMById
-const PASSCODE_UMKM = "UMKM2024"
+const PASSCODE_UMKM = "UMKM2026"
 
 // Map picker variables
 let mapPickerAdd = null

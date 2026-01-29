@@ -1,7 +1,7 @@
 // Admin panel for tourism management - menggunakan Supabase database via API
 const WISATA_ADMIN_API_BASE = "/api/admin/settings"
-let ADMIN_PASSWORD_WISATA = "WISATA2024"
-const EDIT_DELETE_PASSCODE_WISATA = "EDIT2024"
+let ADMIN_PASSWORD_WISATA = "WISATA2026"
+const EDIT_DELETE_PASSCODE_WISATA = "EDIT2026"
 const WISATA_PASSWORD_STORAGE_KEY = "admin_wisata_password"
 
 let mapPickerWisata, mapPickerWisataEdit

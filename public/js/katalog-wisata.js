@@ -1,5 +1,5 @@
 // Passcode for catalog operations
-const PASSCODE_WISATA = "WISATA2024"
+const PASSCODE_WISATA = "WISATA2026"
 
 // Store selected files globally
 let selectedWisataImages = []
