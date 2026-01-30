@@ -822,30 +822,13 @@ function openDetailModal(id) {
               </a>
             </p>
           </div>
-          <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <div style="margin-top: 24px;">
             <a href="https://wa.me/62${(product.kontak || "").replace(/^0/, "")}" target="_blank"
                style="display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
               Hubungi via WhatsApp
             </a>
-            <button onclick="openEditModal(${product.id})"
-               style="background: #059669; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-              Edit
-            </button>
-            <button onclick="confirmDelete(${product.id})"
-               style="background: #dc2626; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-              Hapus
-            </button>
           </div>`
-        : `<div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
-            <button onclick="openEditModal(${product.id})"
-               style="background: #059669; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-              Edit
-            </button>
-            <button onclick="confirmDelete(${product.id})"
-               style="background: #dc2626; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-              Hapus
-            </button>
-          </div>`
+        : ""
     }
   `;
 

@@ -1,435 +1,793 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin CRUD - WEBGIS UMKM</title>
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Add Leaflet CSS for map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <style>
-        /* Additional styles for admin page */
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #334155;
-            font-size: 14px;
-        }
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #1e293b;
-            background: white;
-            transition: all 0.2s;
-        }
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #059669;
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-        }
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        .btn-submit {
-            background: #059669;
-            color: white;
-            padding: 12px 28px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .btn-submit:hover {
-            background: #047857;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Admin CRUD - WEBGIS UMKM</title>
+        <link rel="stylesheet" href="css/style.css" />
+        <!-- Add Leaflet CSS for map -->
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        />
+        <style>
+            /* Additional styles for admin page */
+            .form-group {
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #334155;
+                font-size: 14px;
+            }
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                padding: 12px 14px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #1e293b;
+                background: white;
+                transition: all 0.2s;
+            }
+            .form-group input:focus,
+            .form-group select:focus,
+            .form-group textarea:focus {
+                outline: none;
+                border-color: #059669;
+                box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+            }
+            .form-group textarea {
+                min-height: 100px;
+                resize: vertical;
+            }
+            .btn-submit {
+                background: #059669;
+                color: white;
+                padding: 12px 28px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: 600;
+                transition: all 0.2s;
+            }
+            .btn-submit:hover {
+                background: #047857;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+            }
 
-        .btn-edit,
-        .btn-delete {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            margin-right: 6px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .btn-edit {
-            background: #334155;
-            color: white;
-        }
-        .btn-edit:hover {
-            background: #1e293b;
-            transform: translateY(-1px);
-        }
-        .btn-delete {
-            background: #dc2626;
-            color: white;
-        }
-        .btn-delete:hover {
-            background: #b91c1c;
-            transform: translateY(-1px);
-        }
+            .btn-edit,
+            .btn-delete {
+                padding: 8px 14px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                margin-right: 6px;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            .btn-edit {
+                background: #334155;
+                color: white;
+            }
+            .btn-edit:hover {
+                background: #1e293b;
+                transform: translateY(-1px);
+            }
+            .btn-delete {
+                background: #dc2626;
+                color: white;
+            }
+            .btn-delete:hover {
+                background: #b91c1c;
+                transform: translateY(-1px);
+            }
 
-        /* Map picker styles with modern design */
-        .map-picker-container {
-            margin-bottom: 24px;
-        }
-        .map-picker {
-            height: 350px;
-            width: 100%;
-            border-radius: 12px;
-            border: 2px solid #cbd5e1;
-            margin-bottom: 12px;
-            overflow: hidden;
-        }
-        .map-instruction {
-            background: #f0fdf4;
-            padding: 14px 16px;
-            border-radius: 10px;
-            font-size: 13px;
-            color: #15803d;
-            margin-bottom: 16px;
-            border-left: 4px solid #059669;
-            line-height: 1.6;
-        }
-        .coord-display {
-            background: #f8fafc;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #475569;
-            border: 1px solid #e2e8f0;
-        }
+            /* Map picker styles with modern design */
+            .map-picker-container {
+                margin-bottom: 24px;
+            }
+            .map-picker {
+                height: 350px;
+                width: 100%;
+                border-radius: 12px;
+                border: 2px solid #cbd5e1;
+                margin-bottom: 12px;
+                overflow: hidden;
+            }
+            .map-instruction {
+                background: #f0fdf4;
+                padding: 14px 16px;
+                border-radius: 10px;
+                font-size: 13px;
+                color: #15803d;
+                margin-bottom: 16px;
+                border-left: 4px solid #059669;
+                line-height: 1.6;
+            }
+            .coord-display {
+                background: #f8fafc;
+                padding: 12px 16px;
+                border-radius: 8px;
+                font-family: "Courier New", monospace;
+                font-size: 13px;
+                color: #475569;
+                border: 1px solid #e2e8f0;
+            }
 
-        /* Search styles for admin table */
-        .table-search-container {
-            padding: 20px 24px;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .table-search-controls {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .table-search-input {
-            flex: 1;
-            min-width: 250px;
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        .table-search-input:focus {
-            outline: none;
-            border-color: #059669;
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-        }
-        .table-filter-select {
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-            min-width: 180px;
-        }
-
-    </style>
-</head>
-<body>
-    <div id="loginSection" class="login-container">
-        <div class="login-box">
-            <h2>Admin Login</h2>
-            <p style="text-align: center; margin-bottom: 20px; color: #475569; font-size: 14px; line-height: 1.6;">
-                Halaman ini dilindungi dengan passcode. Hanya administrator yang memiliki akses dapat mengelola data UMKM.
-            </p>
-            <div class="form-group">
-                <label>Passcode</label>
-                <input type="password" id="loginPassword" placeholder="Masukkan passcode" onkeypress="if(event.keyCode==13) login()">
-            </div>
-            <button onclick="login()" class="btn-submit" style="width: 100%;">Login</button>
-            <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #f59e0b;">
-                <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.5;">
-                    <strong>Peringatan Keamanan:</strong><br>
-                    Jangan bagikan passcode kepada orang yang tidak berwenang. Sesi login akan otomatis berakhir setelah 1 jam.
+            /* Search styles for admin table */
+            .table-search-container {
+                padding: 20px 24px;
+                background: #f8fafc;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .table-search-controls {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+            .table-search-input {
+                flex: 1;
+                min-width: 250px;
+                padding: 10px 14px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                font-size: 14px;
+            }
+            .table-search-input:focus {
+                outline: none;
+                border-color: #059669;
+                box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+            }
+            .table-filter-select {
+                padding: 10px 14px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                font-size: 14px;
+                background: white;
+                cursor: pointer;
+                min-width: 180px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loginSection" class="login-container">
+            <div class="login-box">
+                <h2>Admin Login</h2>
+                <p
+                    style="
+                        text-align: center;
+                        margin-bottom: 20px;
+                        color: #475569;
+                        font-size: 14px;
+                        line-height: 1.6;
+                    "
+                >
+                    Halaman ini dilindungi dengan passcode. Hanya administrator
+                    yang memiliki akses dapat mengelola data UMKM.
                 </p>
-            </div>
-            <div style="text-align: center; margin-top: 16px;">
-                <a href="map.html" class="btn-back">← Kembali</a>
+                <div class="form-group">
+                    <label>Passcode</label>
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        placeholder="Masukkan passcode"
+                        onkeypress="if (event.keyCode == 13) login();"
+                    />
+                </div>
+                <button
+                    onclick="login()"
+                    class="btn-submit"
+                    style="width: 100%"
+                >
+                    Login
+                </button>
+                <div
+                    style="
+                        background: #fef3c7;
+                        padding: 12px;
+                        border-radius: 8px;
+                        margin-top: 20px;
+                        border-left: 4px solid #f59e0b;
+                    "
+                >
+                    <p
+                        style="
+                            margin: 0;
+                            font-size: 13px;
+                            color: #92400e;
+                            line-height: 1.5;
+                        "
+                    >
+                        <strong>Peringatan Keamanan:</strong><br />
+                        Jangan bagikan passcode kepada orang yang tidak
+                        berwenang. Sesi login akan otomatis berakhir setelah 1
+                        jam.
+                    </p>
+                </div>
+                <div style="text-align: center; margin-top: 16px">
+                    <a href="map.html" class="btn-back">← Kembali</a>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div id="adminSection" class="admin-container" style="display: none;">
-        <div class="admin-header">
-            <h1>Admin CRUD - WEBGIS UMKM</h1>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <button onclick="window.openChangePasswordModalUMKM()" class="btn-secondary" style="background: #7c3aed;">Ganti Password</button>
-                <button onclick="logout()" class="btn-secondary logout-btn">Logout</button>
+        <div id="adminSection" class="admin-container" style="display: none">
+            <div class="admin-header">
+                <h1>Admin CRUD - WEBGIS UMKM</h1>
+                <div style="display: flex; gap: 10px; align-items: center">
+                    <button
+                        onclick="window.openChangePasswordModalUMKM()"
+                        class="btn-secondary"
+                        style="background: #7c3aed"
+                    >
+                        Ganti Password
+                    </button>
+                    <button onclick="logout()" class="btn-secondary logout-btn">
+                        Logout
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <div class="admin-content">
-            <!-- Form Tambah UMKM -->
-            <div class="admin-section">
-                <h2>Tambah UMKM Baru</h2>
-                <!-- Added info text explaining public access -->
-                <p style="background: #dbeafe; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; color: #1e40af; font-size: 14px; border-left: 4px solid #3b82f6;">
-                    ℹ️ <strong>Informasi:</strong> Siapa saja dapat menambahkan data UMKM baru. Namun, untuk <strong>mengedit</strong> atau <strong>menghapus</strong> data diperlukan passcode khusus yang hanya dimiliki oleh pengelola.
-                </p>
-                <form id="addForm" onsubmit="addUMKM(event)">
-                    <!-- Added search and filter controls above map picker -->
-                    <div class="map-picker-container">
-                        <label style="font-weight: 600; margin-bottom: 10px; display: block; color: #334155;">📍 Pilih Lokasi di Peta</label>
-                        <div class="map-instruction">
-                            <strong>Petunjuk:</strong> Klik pada peta untuk memilih lokasi UMKM. Koordinat akan otomatis terisi di form.
-                        </div>
-                        
-                        <!-- Search and filter controls above map -->
-                        <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
-                                <input 
-                                    type="text" 
-                                    id="mapSearchInput" 
-                                    placeholder="🔍 Cari nama UMKM di peta..."
-                                    style="flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;"
+            <div class="admin-content">
+                <!-- Form Tambah UMKM -->
+                <div class="admin-section">
+                    <h2>Tambah UMKM Baru</h2>
+                    <!-- Added info text explaining public access -->
+                    <p
+                        style="
+                            background: #dbeafe;
+                            padding: 12px 16px;
+                            border-radius: 8px;
+                            margin-bottom: 20px;
+                            color: #1e40af;
+                            font-size: 14px;
+                            border-left: 4px solid #3b82f6;
+                        "
+                    >
+                        ℹ️ <strong>Informasi:</strong> Siapa saja dapat
+                        menambahkan data UMKM baru. Namun, untuk
+                        <strong>mengedit</strong> atau
+                        <strong>menghapus</strong> data diperlukan passcode
+                        khusus yang hanya dimiliki oleh pengelola.
+                    </p>
+                    <form id="addForm" onsubmit="addUMKM(event)">
+                        <!-- Added search and filter controls above map picker -->
+                        <div class="map-picker-container">
+                            <label
+                                style="
+                                    font-weight: 600;
+                                    margin-bottom: 10px;
+                                    display: block;
+                                    color: #334155;
+                                "
+                                >📍 Pilih Lokasi di Peta</label
+                            >
+                            <div class="map-instruction">
+                                <strong>Petunjuk:</strong> Klik pada peta untuk
+                                memilih lokasi UMKM. Koordinat akan otomatis
+                                terisi di form.
+                            </div>
+
+                            <!-- Search and filter controls above map -->
+                            <div
+                                style="
+                                    background: white;
+                                    padding: 16px;
+                                    border-radius: 8px;
+                                    margin-bottom: 12px;
+                                    border: 1px solid #e2e8f0;
+                                "
+                            >
+                                <div
+                                    style="
+                                        display: flex;
+                                        gap: 10px;
+                                        flex-wrap: wrap;
+                                        margin-bottom: 12px;
+                                    "
                                 >
-                                <select id="mapJenisFilter" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white; min-width: 160px;">
-                                    <option value="">📂 Semua Jenis</option>
-                                    <option value="Kuliner">🍜 Kuliner</option>
-                                    <option value="Kerajinan">🎨 Kerajinan</option>
-                                    <option value="Pertanian">🌾 Pertanian</option>
-                                    <option value="Jasa">🛠️ Jasa</option>
-                                    <option value="Lainnya">📍 Lainnya</option>
-                                </select>
-                                <button type="button" onclick="searchMapUMKM()" style="padding: 10px 20px; background: #059669; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap;">🔍 Cari</button>
-                                <button type="button" onclick="resetMapSearch()" style="padding: 10px 20px; background: #64748b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap;">🔄 Reset</button>
+                                    <input
+                                        type="text"
+                                        id="mapSearchInput"
+                                        placeholder="🔍 Cari nama UMKM di peta..."
+                                        style="
+                                            flex: 1;
+                                            min-width: 200px;
+                                            padding: 10px 14px;
+                                            border: 1px solid #cbd5e1;
+                                            border-radius: 8px;
+                                            font-size: 14px;
+                                        "
+                                    />
+                                    <select
+                                        id="mapJenisFilter"
+                                        style="
+                                            padding: 10px 14px;
+                                            border: 1px solid #cbd5e1;
+                                            border-radius: 8px;
+                                            font-size: 14px;
+                                            background: white;
+                                            min-width: 160px;
+                                        "
+                                    >
+                                        <option value="">📂 Semua Jenis</option>
+                                        <option value="Kuliner">
+                                            🍜 Kuliner
+                                        </option>
+                                        <option value="Kerajinan">
+                                            🎨 Kerajinan
+                                        </option>
+                                        <option value="Pertanian">
+                                            🌾 Pertanian
+                                        </option>
+                                        <option value="Jasa">🛠️ Jasa</option>
+                                        <option value="Lainnya">
+                                            📍 Lainnya
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onclick="searchMapUMKM()"
+                                        style="
+                                            padding: 10px 20px;
+                                            background: #059669;
+                                            color: white;
+                                            border: none;
+                                            border-radius: 8px;
+                                            cursor: pointer;
+                                            font-size: 14px;
+                                            font-weight: 500;
+                                            white-space: nowrap;
+                                        "
+                                    >
+                                        🔍 Cari
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onclick="resetMapSearch()"
+                                        style="
+                                            padding: 10px 20px;
+                                            background: #64748b;
+                                            color: white;
+                                            border: none;
+                                            border-radius: 8px;
+                                            cursor: pointer;
+                                            font-size: 14px;
+                                            font-weight: 500;
+                                            white-space: nowrap;
+                                        "
+                                    >
+                                        🔄 Reset
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                onclick="getUserLocationAdmin()"
+                                style="margin-bottom: 12px; width: 100%"
+                            >
+                                📍 Lihat Lokasi Saya
+                            </button>
+                            <div id="mapPicker" class="map-picker"></div>
+                            <div class="coord-display" id="coordDisplay">
+                                <strong>Koordinat:</strong> Belum dipilih
                             </div>
                         </div>
 
-                        <button type="button" class="btn-secondary" onclick="getUserLocationAdmin()" style="margin-bottom: 12px; width: 100%;">
-                            📍 Lihat Lokasi Saya
-                        </button>
-                        <div id="mapPicker" class="map-picker"></div>
-                        <div class="coord-display" id="coordDisplay">
-                            <strong>Koordinat:</strong> Belum dipilih
+                        <div class="form-group">
+                            <label>Nama UMKM *</label>
+                            <input
+                                type="text"
+                                id="nama"
+                                required
+                                placeholder="Contoh: Warung Makan Bu Siti"
+                            />
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Nama UMKM *</label>
-                        <input type="text" id="nama" required placeholder="Contoh: Warung Makan Bu Siti">
-                    </div>
-                    <div class="form-group">
-                        <label>Jenis Usaha *</label>
-                        <select id="jenis" required>
-                            <option value="">Pilih Jenis Usaha</option>
-                            <option value="Kuliner">Kuliner</option>
-                            <option value="Kerajinan">Kerajinan</option>
-                            <option value="Pertanian">Pertanian</option>
-                            <option value="Jasa">Jasa</option>
-                            <option value="Lainnya">Lainnya</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Alamat *</label>
-                        <input type="text" id="alamat" required placeholder="Alamat lengkap UMKM">
-                    </div>
-                    <!-- Make coordinate inputs readonly since they're set by map -->
-                    <div class="form-group">
-                        <label>Latitude * (Otomatis dari peta)</label>
-                        <input type="number" step="any" id="lat" required readonly placeholder="-7.xxx">
-                    </div>
-                    <div class="form-group">
-                        <label>Longitude * (Otomatis dari peta)</label>
-                        <input type="number" step="any" id="lng" required readonly placeholder="110.xxx">
-                    </div>
-                    <div class="form-group">
-                        <label>Deskripsi</label>
-                        <textarea id="deskripsi" placeholder="Deskripsi singkat tentang UMKM..."></textarea>
-                    </div>
-                    <!-- Adding photo upload field -->
-                    <div class="form-group">
-                        <label>Foto UMKM</label>
-                        <input type="file" id="foto" accept="image/*" onchange="previewImage(event, 'fotoPreview')">
-                        <div id="fotoPreview" style="margin-top: 10px;"></div>
-                        <small style="color: #64748b;">Upload foto UMKM (opsional, max 2MB)</small>
-                    </div>
-                    <div class="form-group">
-                        <label>Kontak (No. HP/WhatsApp)</label>
-                        <input type="text" id="kontak" placeholder="Contoh: 081234567890">
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-submit">Tambah UMKM</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Form Edit UMKM -->
-            <div id="editFormSection" class="admin-section" style="display: none;">
-                <h2>Edit UMKM</h2>
-                <form id="editForm" onsubmit="updateUMKM(event)">
-                    <input type="hidden" id="editId">
-                    <div class="map-picker-container">
-                        <label style="font-weight: 600; margin-bottom: 10px; display: block; color: #334155;">📍 Pilih Lokasi di Peta</label>
-                        <div class="map-instruction">
-                            <strong>Petunjuk:</strong> Klik pada peta untuk memperbarui lokasi UMKM.
+                        <div class="form-group">
+                            <label>Jenis Usaha *</label>
+                            <select id="jenis" required>
+                                <option value="">Pilih Jenis Usaha</option>
+                                <option value="Kuliner">Kuliner</option>
+                                <option value="Kerajinan">Kerajinan</option>
+                                <option value="Pertanian">Pertanian</option>
+                                <option value="Jasa">Jasa</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
                         </div>
+                        <div class="form-group">
+                            <label>Alamat *</label>
+                            <input
+                                type="text"
+                                id="alamat"
+                                required
+                                placeholder="Alamat lengkap UMKM"
+                            />
+                        </div>
+                        <!-- Make coordinate inputs readonly since they're set by map -->
+                        <div class="form-group">
+                            <label>Latitude * (Otomatis dari peta)</label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="lat"
+                                required
+                                readonly
+                                placeholder="-7.xxx"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude * (Otomatis dari peta)</label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="lng"
+                                required
+                                readonly
+                                placeholder="110.xxx"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>Deskripsi</label>
+                            <textarea
+                                id="deskripsi"
+                                placeholder="Deskripsi singkat tentang UMKM..."
+                            ></textarea>
+                        </div>
+                        <!-- Adding photo upload field -->
+                        <div class="form-group">
+                            <label>Foto UMKM</label>
+                            <input
+                                type="file"
+                                id="foto"
+                                accept="image/*"
+                                multiple
+                                onchange="window.previewAddUMKMImages(event)"
+                            />
+                            <div
+                                id="fotoPreview"
+                                style="
+                                    margin-top: 10px;
+                                    display: flex;
+                                    gap: 8px;
+                                    flex-wrap: wrap;
+                                "
+                            ></div>
+                            <small style="color: #64748b"
+                                >Upload foto UMKM (opsional, max 2MB per gambar,
+                                bisa pilih beberapa)</small
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label>Kontak (No. HP/WhatsApp)</label>
+                            <input
+                                type="text"
+                                id="kontak"
+                                placeholder="Contoh: 081234567890"
+                            />
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit">
+                                Tambah UMKM
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-                        <!-- Added search and filter controls above edit map picker -->
-                        <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
-                                <input 
-                                    type="text" 
-                                    id="mapSearchInputEdit" 
-                                    placeholder="🔍 Cari nama UMKM di peta..."
-                                    style="flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;"
+                <!-- Form Edit UMKM -->
+                <div
+                    id="editFormSection"
+                    class="admin-section"
+                    style="display: none"
+                >
+                    <h2>Edit UMKM</h2>
+                    <form id="editForm" onsubmit="updateUMKM(event)">
+                        <input type="hidden" id="editId" />
+                        <div class="map-picker-container">
+                            <label
+                                style="
+                                    font-weight: 600;
+                                    margin-bottom: 10px;
+                                    display: block;
+                                    color: #334155;
+                                "
+                                >📍 Pilih Lokasi di Peta</label
+                            >
+                            <div class="map-instruction">
+                                <strong>Petunjuk:</strong> Klik pada peta untuk
+                                memperbarui lokasi UMKM.
+                            </div>
+
+                            <!-- Added search and filter controls above edit map picker -->
+                            <div
+                                style="
+                                    background: white;
+                                    padding: 16px;
+                                    border-radius: 8px;
+                                    margin-bottom: 12px;
+                                    border: 1px solid #e2e8f0;
+                                "
+                            >
+                                <div
+                                    style="
+                                        display: flex;
+                                        gap: 10px;
+                                        flex-wrap: wrap;
+                                        margin-bottom: 12px;
+                                    "
                                 >
-                                <select id="mapJenisFilterEdit" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white; min-width: 160px;">
-                                    <option value="">📂 Semua Jenis</option>
-                                    <option value="Kuliner">🍜 Kuliner</option>
-                                    <option value="Kerajinan">🎨 Kerajinan</option>
-                                    <option value="Pertanian">🌾 Pertanian</option>
-                                    <option value="Jasa">🛠️ Jasa</option>
-                                    <option value="Lainnya">📍 Lainnya</option>
-                                </select>
-                                <button type="button" onclick="searchMapUMKMEdit()" style="padding: 10px 20px; background: #059669; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap;">🔍 Cari</button>
-                                <button type="button" onclick="resetMapSearchEdit()" style="padding: 10px 20px; background: #64748b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap;">🔄 Reset</button>
+                                    <input
+                                        type="text"
+                                        id="mapSearchInputEdit"
+                                        placeholder="🔍 Cari nama UMKM di peta..."
+                                        style="
+                                            flex: 1;
+                                            min-width: 200px;
+                                            padding: 10px 14px;
+                                            border: 1px solid #cbd5e1;
+                                            border-radius: 8px;
+                                            font-size: 14px;
+                                        "
+                                    />
+                                    <select
+                                        id="mapJenisFilterEdit"
+                                        style="
+                                            padding: 10px 14px;
+                                            border: 1px solid #cbd5e1;
+                                            border-radius: 8px;
+                                            font-size: 14px;
+                                            background: white;
+                                            min-width: 160px;
+                                        "
+                                    >
+                                        <option value="">📂 Semua Jenis</option>
+                                        <option value="Kuliner">
+                                            🍜 Kuliner
+                                        </option>
+                                        <option value="Kerajinan">
+                                            🎨 Kerajinan
+                                        </option>
+                                        <option value="Pertanian">
+                                            🌾 Pertanian
+                                        </option>
+                                        <option value="Jasa">🛠️ Jasa</option>
+                                        <option value="Lainnya">
+                                            📍 Lainnya
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onclick="searchMapUMKMEdit()"
+                                        style="
+                                            padding: 10px 20px;
+                                            background: #059669;
+                                            color: white;
+                                            border: none;
+                                            border-radius: 8px;
+                                            cursor: pointer;
+                                            font-size: 14px;
+                                            font-weight: 500;
+                                            white-space: nowrap;
+                                        "
+                                    >
+                                        🔍 Cari
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onclick="resetMapSearchEdit()"
+                                        style="
+                                            padding: 10px 20px;
+                                            background: #64748b;
+                                            color: white;
+                                            border: none;
+                                            border-radius: 8px;
+                                            cursor: pointer;
+                                            font-size: 14px;
+                                            font-weight: 500;
+                                            white-space: nowrap;
+                                        "
+                                    >
+                                        🔄 Reset
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                onclick="getUserLocationAdminEdit()"
+                                style="margin-bottom: 12px; width: 100%"
+                            >
+                                📍 Lihat Lokasi Saya
+                            </button>
+                            <div id="mapPickerEdit" class="map-picker"></div>
+                            <div class="coord-display" id="coordDisplayEdit">
+                                <strong>Koordinat:</strong> Belum dipilih
                             </div>
                         </div>
 
-                        <button type="button" class="btn-secondary" onclick="getUserLocationAdminEdit()" style="margin-bottom: 12px; width: 100%;">
-                            📍 Lihat Lokasi Saya
-                        </button>
-                        <div id="mapPickerEdit" class="map-picker"></div>
-                        <div class="coord-display" id="coordDisplayEdit">
-                            <strong>Koordinat:</strong> Belum dipilih
+                        <div class="form-group">
+                            <label>Nama UMKM *</label>
+                            <input type="text" id="editNama" required />
                         </div>
-                    </div>
+                        <div class="form-group">
+                            <label>Jenis Usaha *</label>
+                            <select id="editJenis" required>
+                                <option value="">Pilih Jenis Usaha</option>
+                                <option value="Kuliner">Kuliner</option>
+                                <option value="Kerajinan">Kerajinan</option>
+                                <option value="Pertanian">Pertanian</option>
+                                <option value="Jasa">Jasa</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Alamat *</label>
+                            <input type="text" id="editAlamat" required />
+                        </div>
+                        <!-- Make edit coordinate inputs readonly -->
+                        <div class="form-group">
+                            <label>Latitude * (Otomatis dari peta)</label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="editLat"
+                                required
+                                readonly
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude * (Otomatis dari peta)</label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="editLng"
+                                required
+                                readonly
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>Deskripsi</label>
+                            <textarea
+                                id="editDeskripsi"
+                                placeholder="Deskripsi singkat tentang UMKM..."
+                            ></textarea>
+                        </div>
+                        <!-- Adding photo upload field for edit form -->
+                        <div class="form-group">
+                            <label>Foto UMKM</label>
+                            <input
+                                type="file"
+                                id="editFoto"
+                                accept="image/*"
+                                multiple
+                                onchange="window.previewEditUMKMImages(event)"
+                            />
+                            <div
+                                id="editFotoPreview"
+                                style="
+                                    margin-top: 10px;
+                                    display: flex;
+                                    gap: 8px;
+                                    flex-wrap: wrap;
+                                "
+                            ></div>
+                            <small style="color: #64748b"
+                                >Upload foto baru atau kosongkan untuk tetap
+                                menggunakan foto lama</small
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label>Kontak (No. HP/WhatsApp)</label>
+                            <input
+                                type="text"
+                                id="editKontak"
+                                placeholder="Contoh: 081234567890"
+                            />
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit">
+                                Simpan Perubahan
+                            </button>
+                            <button
+                                type="button"
+                                onclick="cancelEdit()"
+                                class="btn-cancel"
+                            >
+                                Batal
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-                    <div class="form-group">
-                        <label>Nama UMKM *</label>
-                        <input type="text" id="editNama" required>
+                <!-- Daftar UMKM -->
+                <div class="admin-section">
+                    <h2>Daftar UMKM</h2>
+                    <div style="overflow-x: auto">
+                        <table class="umkm-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama</th>
+                                    <th>Jenis</th>
+                                    <th>Alamat</th>
+                                    <th>Koordinat</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="umkmTableBody"></tbody>
+                        </table>
                     </div>
-                    <div class="form-group">
-                        <label>Jenis Usaha *</label>
-                        <select id="editJenis" required>
-                            <option value="">Pilih Jenis Usaha</option>
-                            <option value="Kuliner">Kuliner</option>
-                            <option value="Kerajinan">Kerajinan</option>
-                            <option value="Pertanian">Pertanian</option>
-                            <option value="Jasa">Jasa</option>
-                            <option value="Lainnya">Lainnya</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Alamat *</label>
-                        <input type="text" id="editAlamat" required>
-                    </div>
-                    <!-- Make edit coordinate inputs readonly -->
-                    <div class="form-group">
-                        <label>Latitude * (Otomatis dari peta)</label>
-                        <input type="number" step="any" id="editLat" required readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Longitude * (Otomatis dari peta)</label>
-                        <input type="number" step="any" id="editLng" required readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Deskripsi</label>
-                        <textarea id="editDeskripsi" placeholder="Deskripsi singkat tentang UMKM..."></textarea>
-                    </div>
-                    <!-- Adding photo upload field for edit form -->
-                    <div class="form-group">
-                        <label>Foto UMKM</label>
-                        <input type="file" id="editFoto" accept="image/*" onchange="previewImage(event, 'editFotoPreview')">
-                        <div id="editFotoPreview" style="margin-top: 10px;"></div>
-                        <small style="color: #64748b;">Upload foto baru atau kosongkan untuk tetap menggunakan foto lama</small>
-                    </div>
-                    <div class="form-group">
-                        <label>Kontak (No. HP/WhatsApp)</label>
-                        <input type="text" id="editKontak" placeholder="Contoh: 081234567890">
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-submit">Simpan Perubahan</button>
-                        <button type="button" onclick="cancelEdit()" class="btn-cancel">Batal</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Daftar UMKM -->
-            <div class="admin-section">
-                <h2>Daftar UMKM</h2>
-                <div style="overflow-x: auto;">
-                    <table class="umkm-table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama</th>
-                                <th>Jenis</th>
-                                <th>Alamat</th>
-                                <th>Koordinat</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="umkmTableBody">
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Change Password Modal UMKM -->
-    <div id="changePasswordModalUMKM" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🔐 Ganti Password Admin UMKM</h2>
-                <button class="modal-close" onclick="window.closeChangePasswordModalUMKM()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Password Lama</label>
-                    <input type="password" id="oldPasswordUMKM" placeholder="Masukkan password lama">
+        <!-- Change Password Modal UMKM -->
+        <div id="changePasswordModalUMKM" class="modal" style="display: none">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🔐 Ganti Password Admin UMKM</h2>
+                    <button
+                        class="modal-close"
+                        onclick="window.closeChangePasswordModalUMKM()"
+                    >
+                        ✕
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label>Password Baru</label>
-                    <input type="password" id="newPasswordUMKM" placeholder="Masukkan password baru">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Password Lama</label>
+                        <input
+                            type="password"
+                            id="oldPasswordUMKM"
+                            placeholder="Masukkan password lama"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Password Baru</label>
+                        <input
+                            type="password"
+                            id="newPasswordUMKM"
+                            placeholder="Masukkan password baru"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Konfirmasi Password Baru</label>
+                        <input
+                            type="password"
+                            id="confirmPasswordUMKM"
+                            placeholder="Konfirmasi password baru"
+                        />
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Konfirmasi Password Baru</label>
-                    <input type="password" id="confirmPasswordUMKM" placeholder="Konfirmasi password baru">
+                <div class="modal-footer">
+                    <button
+                        onclick="window.closeChangePasswordModalUMKM()"
+                        class="btn-secondary"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        onclick="window.changePasswordUMKM()"
+                        class="btn-submit"
+                    >
+                        Ubah Password
+                    </button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button onclick="window.closeChangePasswordModalUMKM()" class="btn-secondary">Batal</button>
-                <button onclick="window.changePasswordUMKM()" class="btn-submit">Ubah Password</button>
             </div>
         </div>
-    </div>
 
-    <!-- Add Leaflet JS library -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/admin.js"></script>
-</body>
+        <!-- Add Leaflet JS library -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="js/data.js"></script>
+        <script src="js/admin.js"></script>
+    </body>
 </html>

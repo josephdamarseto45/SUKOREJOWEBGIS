@@ -15,6 +15,11 @@ let pickerMarkerEdit = null;
 let existingAddMarkers = [];
 let existingEditMarkers = [];
 
+// Store selected files globally
+let selectedAddUMKMImages = [];
+let selectedEditUMKMImages = [];
+let deletedExistingUMKMImages = []; // Track deleted existing images
+
 const tableSearchQuery = "";
 const tableJenisFilter = "";
 
@@ -257,84 +262,69 @@ async function loadUMKMTable() {
 window.addUMKM = async (event) => {
   event.preventDefault();
 
-  const fotoInput = document.getElementById("foto");
-  let fotoData = null;
+  const nama = document.getElementById("nama").value;
+  const jenis = document.getElementById("jenis").value;
+  const alamat = document.getElementById("alamat").value;
+  const lat = document.getElementById("lat").value;
+  const lng = document.getElementById("lng").value;
+  const deskripsi = document.getElementById("deskripsi").value;
+  const kontak = document.getElementById("kontak").value;
 
-  // Convert photo to base64 if provided
-  if (fotoInput.files && fotoInput.files[0]) {
-    const file = fotoInput.files[0];
-
-    // Check file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert("❌ Ukuran foto terlalu besar! Maksimal 2MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      fotoData = e.target.result;
-
-      // Create UMKM object with photo
-      const umkm = {
-        nama: document.getElementById("nama").value,
-        jenis: document.getElementById("jenis").value,
-        alamat: document.getElementById("alamat").value,
-        lat: Number.parseFloat(document.getElementById("lat").value),
-        lng: Number.parseFloat(document.getElementById("lng").value),
-        deskripsi: document.getElementById("deskripsi").value,
-        foto: fotoData,
-        kontak: document.getElementById("kontak").value,
-      };
-
-      window.addNewUMKM(umkm);
-      await loadUMKMTable();
-
-      // Reset form
-      document.getElementById("addForm").reset();
-      document.getElementById("fotoPreview").innerHTML = "";
-
-      if (pickerMarker) {
-        mapPicker.removeLayer(pickerMarker);
-        pickerMarker = null;
-      }
-      document.getElementById("coordDisplay").innerHTML =
-        "<strong>Koordinat:</strong> Belum dipilih";
-
-      loadExistingMarkersToAddMap();
-
-      alert(`✅ UMKM "${umkm.nama}" berhasil ditambahkan!`);
-    };
-    reader.readAsDataURL(file);
-  } else {
-    // No photo provided
-    const umkm = {
-      nama: document.getElementById("nama").value,
-      jenis: document.getElementById("jenis").value,
-      alamat: document.getElementById("alamat").value,
-      lat: Number.parseFloat(document.getElementById("lat").value),
-      lng: Number.parseFloat(document.getElementById("lng").value),
-      deskripsi: document.getElementById("deskripsi").value,
-      foto: null,
-      kontak: document.getElementById("kontak").value,
-    };
-
-    window.addNewUMKM(umkm);
-    await loadUMKMTable();
-
-    // Reset form
-    document.getElementById("addForm").reset();
-
-    if (pickerMarker) {
-      mapPicker.removeLayer(pickerMarker);
-      pickerMarker = null;
-    }
-    document.getElementById("coordDisplay").innerHTML =
-      "<strong>Koordinat:</strong> Belum dipilih";
-
-    loadExistingMarkersToAddMap();
-
-    alert(`✅ UMKM "${umkm.nama}" berhasil ditambahkan!`);
+  if (!nama || !jenis || !alamat || !lat || !lng) {
+    alert("Mohon lengkapi semua field yang wajib diisi!");
+    return;
   }
+
+  // Handle images - convert all to base64
+  const imagePromises = selectedAddUMKMImages.map((file) => {
+    return new Promise((resolve) => {
+      if (file.size > 2 * 1024 * 1024) {
+        alert(`❌ Gambar terlalu besar! Maksimal 2MB.`);
+        resolve(null);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  });
+
+  const images = await Promise.all(imagePromises);
+  const validImages = images.filter((img) => img !== null);
+
+  // Create UMKM object
+  const umkm = {
+    nama: nama,
+    jenis: jenis,
+    alamat: alamat,
+    lat: Number.parseFloat(lat),
+    lng: Number.parseFloat(lng),
+    deskripsi: deskripsi,
+    foto: validImages.length > 0 ? validImages[0] : null,
+    gambar_list: validImages,
+    kontak: kontak,
+  };
+
+  await window.addNewUMKM(umkm);
+  await loadUMKMTable();
+
+  // Reset form and clear image selections
+  document.getElementById("addForm").reset();
+  document.getElementById("fotoPreview").innerHTML = "";
+  selectedAddUMKMImages = [];
+  deletedExistingUMKMImages = [];
+
+  if (pickerMarker) {
+    mapPicker.removeLayer(pickerMarker);
+    pickerMarker = null;
+  }
+  document.getElementById("coordDisplay").innerHTML =
+    "<strong>Koordinat:</strong> Belum dipilih";
+
+  loadExistingMarkersToAddMap();
+
+  alert(`✅ UMKM "${umkm.nama}" berhasil ditambahkan!`);
 };
 
 // Edit UMKM
@@ -370,17 +360,20 @@ window.editUMKM = (id) => {
   document.getElementById("editDeskripsi").value = umkm.deskripsi || "";
   document.getElementById("editKontak").value = umkm.kontak || "";
 
-  const editFotoPreview = document.getElementById("editFotoPreview");
-  if (umkm.foto) {
-    editFotoPreview.innerHTML = `
-      <div style="margin-top: 10px;">
-        <p style="margin-bottom: 8px; color: #64748b; font-size: 14px;">Foto saat ini:</p>
-        <img src="${umkm.foto}" alt="Foto ${umkm.nama}" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #e2e8f0;">
-      </div>
-    `;
-  } else {
-    editFotoPreview.innerHTML = "";
-  }
+  // Store existing images and reset edit arrays
+  const images =
+    umkm.gambar_list && umkm.gambar_list.length > 0
+      ? umkm.gambar_list
+      : umkm.foto
+        ? [umkm.foto]
+        : [];
+
+  window.existingUMKMImages = JSON.parse(JSON.stringify(images));
+  selectedEditUMKMImages = [];
+  deletedExistingUMKMImages = [];
+
+  // Render image previews
+  renderEditUMKMImagePreviews();
 
   // Tampilkan form edit
   document.getElementById("editFormSection").style.display = "block";
@@ -399,65 +392,65 @@ window.updateUMKM = async (event) => {
   event.preventDefault();
 
   const id = Number.parseInt(document.getElementById("editId").value);
+  const nama = document.getElementById("editNama").value;
+  const jenis = document.getElementById("editJenis").value;
+  const alamat = document.getElementById("editAlamat").value;
+  const lat = document.getElementById("editLat").value;
+  const lng = document.getElementById("editLng").value;
+  const deskripsi = document.getElementById("editDeskripsi").value;
+  const kontak = document.getElementById("editKontak").value;
 
-  const editFotoInput = document.getElementById("editFoto");
-
-  // If new photo is provided, convert to base64
-  if (editFotoInput.files && editFotoInput.files[0]) {
-    const file = editFotoInput.files[0];
-
-    // Check file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert("❌ Ukuran foto terlalu besar! Maksimal 2MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const updatedUMKM = {
-        nama: document.getElementById("editNama").value,
-        jenis: document.getElementById("editJenis").value,
-        alamat: document.getElementById("editAlamat").value,
-        lat: Number.parseFloat(document.getElementById("editLat").value),
-        lng: Number.parseFloat(document.getElementById("editLng").value),
-        deskripsi: document.getElementById("editDeskripsi").value,
-        foto: e.target.result,
-        kontak: document.getElementById("editKontak").value,
-      };
-
-      window.updateUMKMData(id, updatedUMKM);
-      await loadUMKMTable();
-      loadExistingMarkersToAddMap();
-      if (mapPickerEdit) {
-        loadExistingMarkersToEditMap();
-      }
-      window.cancelEdit();
-      alert(`✅ UMKM "${updatedUMKM.nama}" berhasil diupdate!`);
-    };
-    reader.readAsDataURL(file);
-  } else {
-    // No new photo, keep existing photo
-    const existingUMKM = window.getUMKMById(id);
-    const updatedUMKM = {
-      nama: document.getElementById("editNama").value,
-      jenis: document.getElementById("editJenis").value,
-      alamat: document.getElementById("editAlamat").value,
-      lat: Number.parseFloat(document.getElementById("editLat").value),
-      lng: Number.parseFloat(document.getElementById("editLng").value),
-      deskripsi: document.getElementById("editDeskripsi").value,
-      foto: existingUMKM.foto || null,
-      kontak: document.getElementById("editKontak").value,
-    };
-
-    window.updateUMKMData(id, updatedUMKM);
-    await loadUMKMTable();
-    loadExistingMarkersToAddMap();
-    if (mapPickerEdit) {
-      loadExistingMarkersToEditMap();
-    }
-    window.cancelEdit();
-    alert(`✅ UMKM "${updatedUMKM.nama}" berhasil diupdate!`);
+  if (!nama || !jenis || !alamat || !lat || !lng) {
+    alert("Mohon lengkapi semua field yang wajib diisi!");
+    return;
   }
+
+  // Handle new images - convert all to base64
+  const imagePromises = selectedEditUMKMImages.map((file) => {
+    return new Promise((resolve) => {
+      if (file.size > 2 * 1024 * 1024) {
+        alert(`❌ Gambar terlalu besar! Maksimal 2MB.`);
+        resolve(null);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  });
+
+  const newImages = await Promise.all(imagePromises);
+  const validNewImages = newImages.filter((img) => img !== null);
+
+  // Combine existing + new, excluding deleted
+  const finalImages = [
+    ...(window.existingUMKMImages || []).filter(
+      (img) => !deletedExistingUMKMImages.includes(img),
+    ),
+    ...validNewImages,
+  ].filter((img) => img);
+
+  const updatedUMKM = {
+    nama: nama,
+    jenis: jenis,
+    alamat: alamat,
+    lat: Number.parseFloat(lat),
+    lng: Number.parseFloat(lng),
+    deskripsi: deskripsi,
+    foto: finalImages.length > 0 ? finalImages[0] : null,
+    gambar_list: finalImages,
+    kontak: kontak,
+  };
+
+  await window.updateUMKMData(id, updatedUMKM);
+  await loadUMKMTable();
+  loadExistingMarkersToAddMap();
+  if (mapPickerEdit) {
+    loadExistingMarkersToEditMap();
+  }
+  window.cancelEdit();
+  alert(`✅ UMKM "${updatedUMKM.nama}" berhasil diupdate!`);
 };
 
 // Cancel edit
@@ -465,6 +458,12 @@ window.cancelEdit = () => {
   document.getElementById("editForm").reset();
   document.getElementById("editFotoPreview").innerHTML = "";
   document.getElementById("editFormSection").style.display = "none";
+
+  // Clear image arrays
+  selectedEditUMKMImages = [];
+  deletedExistingUMKMImages = [];
+  window.existingUMKMImages = [];
+
   if (mapPickerEdit) {
     mapPickerEdit.remove();
     mapPickerEdit = null;
@@ -906,6 +905,118 @@ window.getUserLocationAdminEdit = () => {
   );
 };
 
+// Image preview functions for UMKM (multiple images support)
+window.previewAddUMKMImages = (event) => {
+  const files = event.target.files;
+  selectedAddUMKMImages = [...selectedAddUMKMImages, ...Array.from(files)];
+  renderAddUMKMImagePreviews();
+};
+
+window.previewEditUMKMImages = (event) => {
+  const files = event.target.files;
+  selectedEditUMKMImages = [...selectedEditUMKMImages, ...Array.from(files)];
+  renderEditUMKMImagePreviews();
+};
+
+function renderAddUMKMImagePreviews() {
+  const container = document.getElementById("fotoPreview");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  selectedAddUMKMImages.forEach((file, index) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const imgDiv = document.createElement("div");
+      imgDiv.style.position = "relative";
+      imgDiv.style.display = "inline-block";
+      imgDiv.style.marginRight = "8px";
+      imgDiv.innerHTML = `
+        <img src="${e.target.result}" style="width: 100px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #e2e8f0;">
+        <span style="position: absolute; top: -8px; right: -8px; background: #059669; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">${index + 1}</span>
+        <button type="button" data-index="${index}" onclick="window.deleteAddUMKMImage(this)" style="position: absolute; top: -8px; left: -8px; background: #dc2626; color: white; width: 20px; height: 20px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold;">×</button>
+      `;
+      container.appendChild(imgDiv);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderEditUMKMImagePreviews() {
+  const container = document.getElementById("editFotoPreview");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  // Existing images
+  if (window.existingUMKMImages && window.existingUMKMImages.length > 0) {
+    const header = document.createElement("div");
+    header.innerHTML =
+      '<p style="font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 8px; width: 100%;">Gambar yang ada:</p>';
+    container.appendChild(header);
+
+    window.existingUMKMImages.forEach((img, index) => {
+      const imgDiv = document.createElement("div");
+      imgDiv.style.position = "relative";
+      imgDiv.style.display = "inline-block";
+      imgDiv.style.marginRight = "8px";
+      imgDiv.innerHTML = `
+        <img src="${img}" style="width: 100px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #e2e8f0;">
+        <span style="position: absolute; top: -8px; right: -8px; background: #059669; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">${index + 1}</span>
+        <button type="button" data-type="existing" data-index="${index}" onclick="window.deleteUMKMImageItem(this)" style="position: absolute; top: -8px; left: -8px; background: #dc2626; color: white; width: 20px; height: 20px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold;">×</button>
+      `;
+      container.appendChild(imgDiv);
+    });
+  }
+
+  // New images
+  if (selectedEditUMKMImages.length > 0) {
+    const header = document.createElement("div");
+    header.innerHTML =
+      '<p style="font-size: 12px; color: #059669; font-weight: 600; margin-bottom: 8px; margin-top: 16px; width: 100%;">Gambar baru:</p>';
+    container.appendChild(header);
+
+    selectedEditUMKMImages.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imgDiv = document.createElement("div");
+        imgDiv.style.position = "relative";
+        imgDiv.style.display = "inline-block";
+        imgDiv.style.marginRight = "8px";
+        imgDiv.innerHTML = `
+          <img src="${e.target.result}" style="width: 100px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #e2e8f0;">
+          <span style="position: absolute; top: -8px; right: -8px; background: #059669; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">${index + 1}</span>
+          <button type="button" data-type="new" data-index="${index}" onclick="window.deleteUMKMImageItem(this)" style="position: absolute; top: -8px; left: -8px; background: #dc2626; color: white; width: 20px; height: 20px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold;">×</button>
+        `;
+        container.appendChild(imgDiv);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+}
+
+window.deleteAddUMKMImage = (btn) => {
+  const index = parseInt(btn.getAttribute("data-index"));
+  selectedAddUMKMImages.splice(index, 1);
+  renderAddUMKMImagePreviews();
+};
+
+window.deleteUMKMImageItem = (btn) => {
+  const type = btn.getAttribute("data-type");
+  const index = parseInt(btn.getAttribute("data-index"));
+
+  if (type === "existing") {
+    const deleted = window.existingUMKMImages.splice(index, 1);
+    if (deleted.length > 0) {
+      deletedExistingUMKMImages.push(deleted[0]);
+    }
+  } else if (type === "new") {
+    selectedEditUMKMImages.splice(index, 1);
+  }
+
+  renderEditUMKMImagePreviews();
+};
+
 window.searchMapUMKM = () => {
   const searchInput = document.getElementById("mapSearchInput");
   const jenisSelect = document.getElementById("mapJenisFilter");
@@ -1109,31 +1220,3 @@ function loadUMKMMarkersOnAdminMap() {
 function loadUMKMMarkersOnAdminMapEdit() {
   // Implementation for loading UMKM markers on edit form map
 }
-
-window.previewImage = (event, previewElementId) => {
-  const file = event.target.files[0];
-  const previewDiv = document.getElementById(previewElementId);
-
-  if (file) {
-    // Check file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert("❌ Ukuran foto terlalu besar! Maksimal 2MB.");
-      event.target.value = "";
-      previewDiv.innerHTML = "";
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewDiv.innerHTML = `
-        <div style="margin-top: 10px;">
-          <p style="margin-bottom: 8px; color: #64748b; font-size: 14px;">Preview:</p>
-          <img src="${e.target.result}" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #e2e8f0;">
-        </div>
-      `;
-    };
-    reader.readAsDataURL(file);
-  } else {
-    previewDiv.innerHTML = "";
-  }
-};

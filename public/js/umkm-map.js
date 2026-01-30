@@ -63,15 +63,18 @@ function displayUMKMMarkers(data) {
 }
 
 function createPopupContent(umkm) {
+  // Get first image from gambar_list or fall back to gambar
+  const umkmImage = umkm.gambar_list?.[0] || umkm.gambar || null;
+
   return `
     <div style="min-width: 280px; max-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
       ${
-        umkm.foto
+        umkmImage
           ? `
         <div style="position: relative; margin: -14px -14px 12px -14px; overflow: hidden; border-radius: 8px 8px 0 0;">
-          <img src="${umkm.foto}" alt="${umkm.nama}"
+          <img src="${umkmImage}" alt="${umkm.nama}"
             style="width: 100%; height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s ease;"
-            onclick="window.openImageFullscreen('${umkm.foto}', '${umkm.nama}')"
+            onclick="window.openImageFullscreen('${umkmImage}', '${umkm.nama}')"
             onmouseover="this.style.transform='scale(1.05)'"
             onmouseout="this.style.transform='scale(1)'"
           >
@@ -243,12 +246,15 @@ function populateUMKMList(data) {
   data.forEach((umkm, index) => {
     const item = document.createElement("div");
     item.className = "wisata-list-item";
+    // Get first image from gambar_list or fall back to gambar
+    const umkmImage = umkm.gambar_list?.[0] || umkm.gambar || null;
+
     item.innerHTML = `
       <div class="wisata-list-item-content">
         ${
-          umkm.foto
+          umkmImage
             ? `
-          <img src="${umkm.foto}" alt="${umkm.nama}" class="wisata-list-thumbnail">
+          <img src="${umkmImage}" alt="${umkm.nama}" class="wisata-list-thumbnail">
         `
             : `
           <div class="wisata-list-placeholder">${getJenisEmoji(umkm.jenis)}</div>
