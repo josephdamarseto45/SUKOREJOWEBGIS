@@ -756,6 +756,15 @@ function openDetailModal(id) {
   const detailContent = document.getElementById("detailContent");
   document.getElementById("detailTitle").textContent = product.nama;
 
+  // Category icon mapping
+  const categoryIcons = {
+    Kuliner: "🍜",
+    Kerajinan: "🎨",
+    Pertanian: "🌾",
+    Jasa: "🛠️",
+    Lainnya: "📍",
+  };
+
   const images =
     product.gambar_list && product.gambar_list.length > 0
       ? product.gambar_list
@@ -773,6 +782,8 @@ function openDetailModal(id) {
     ...videos.map((vid) => ({ type: "video", src: vid })),
   ];
 
+  const category = product.kategori || product.jenis || "Lainnya";
+
   detailContent.innerHTML = `
     <div id="detail-gallery-${product.id}" style="margin-bottom: 20px;">
       ${
@@ -781,39 +792,61 @@ function openDetailModal(id) {
           : ""
       }
     </div>
-    <h3 style="color: #0f172a; font-size: 1.5rem; font-weight: 700; margin-bottom: 16px;">${product.nama}</h3>
+
     <div style="margin-bottom: 16px;">
-      <span style="display: inline-block; background: #d1fae5; color: #065f46; padding: 6px 12px; border-radius: 6px; font-size: 0.875rem; font-weight: 600;">
-        ${product.kategori || product.jenis || "Lainnya"}
+      <span style="display: inline-block; background: #d1fae5; color: #059669; padding: 6px 16px; border-radius: 12px; font-size: 0.875rem; font-weight: 600;">
+        ${categoryIcons[category] || "📍"} ${category}
       </span>
     </div>
-    <p style="color: #475569; line-height: 1.7; margin-bottom: 20px;">${product.deskripsi}</p>
-    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-      <div style="display: flex; align-items: start; gap: 8px;">
-        <span style="font-size: 1.2rem;">📍</span>
-        <div>
-          <strong style="color: #334155;">Lokasi:</strong>
-          <p style="color: #64748b; margin: 4px 0 0 0;">${product.alamat || product.lokasi || "Desa Sukorejo"}</p>
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 1.2rem;">📱</span>
-        <div>
-          <strong style="color: #334155;">Kontak:</strong>
-          <a href="https://wa.me/62${(product.kontak || "").replace(/^0/, "")}" target="_blank" style="color: #059669; text-decoration: none; font-weight: 600; margin-left: 8px;">
-            ${product.kontak || "-"}
-          </a>
-        </div>
-      </div>
+
+    <div style="margin-bottom: 16px;">
+      <h4 style="color: #0f172a; margin-bottom: 8px; font-size: 1.1rem;">Deskripsi</h4>
+      <p style="color: #475569; line-height: 1.6;">${product.deskripsi || "Tidak ada deskripsi"}</p>
     </div>
-    <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-      <button onclick="openEditModal(${product.id})" style="flex: 1; background: #059669; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
-        Edit Produk
-      </button>
-      <button onclick="confirmDelete(${product.id})" style="flex: 1; background: #dc2626; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
-        Hapus Produk
-      </button>
+
+    <div style="margin-bottom: 16px;">
+      <h4 style="color: #0f172a; margin-bottom: 8px; font-size: 1.1rem;">Lokasi</h4>
+      <p style="color: #475569; display: flex; align-items: center; gap: 8px;">
+        <span>📍</span> ${product.alamat || product.lokasi || "Desa Sukorejo"}
+      </p>
     </div>
+
+    ${
+      product.kontak
+        ? `<div style="margin-bottom: 16px;">
+            <h4 style="color: #0f172a; margin-bottom: 8px; font-size: 1.1rem;">Kontak</h4>
+            <p style="color: #059669; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+              <span>📱</span>
+              <a href="https://wa.me/62${(product.kontak || "").replace(/^0/, "")}" target="_blank" style="color: #059669; text-decoration: none;">
+                ${product.kontak}
+              </a>
+            </p>
+          </div>
+          <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="https://wa.me/62${(product.kontak || "").replace(/^0/, "")}" target="_blank"
+               style="display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              Hubungi via WhatsApp
+            </a>
+            <button onclick="openEditModal(${product.id})"
+               style="background: #059669; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+              Edit
+            </button>
+            <button onclick="confirmDelete(${product.id})"
+               style="background: #dc2626; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+              Hapus
+            </button>
+          </div>`
+        : `<div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <button onclick="openEditModal(${product.id})"
+               style="background: #059669; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+              Edit
+            </button>
+            <button onclick="confirmDelete(${product.id})"
+               style="background: #dc2626; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+              Hapus
+            </button>
+          </div>`
+    }
   `;
 
   document.getElementById("productDetailModal").style.display = "flex";
