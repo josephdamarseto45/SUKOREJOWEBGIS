@@ -1,62 +1,64 @@
 // Interactive tourism map with search, filter, and animated popups
-let wisataMap
-let wisataMarkers = []
-let allWisataData = []
-let wisataRoutingControl = null
-let wisataUserMarker = null
+let wisataMap;
+let wisataMarkers = [];
+let allWisataData = [];
+let wisataRoutingControl = null;
+let wisataUserMarker = null;
 
-function initializeWisataMap() {
+async function initializeWisataMap() {
   // Initialize main map
-  wisataMap = window.L.map("wisataMap").setView([-7.5626, 110.8282], 13)
+  wisataMap = window.L.map("wisataMap").setView([-7.5626, 110.8282], 13);
 
   window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap contributors",
-  }).addTo(wisataMap)
+  }).addTo(wisataMap);
 
-  // Load all tourism data
-  allWisataData = window.getAllWisata()
+  // Load all tourism data from API (fresh data, not cache)
+  allWisataData = await window.getAllWisataAsync();
 
   // Display all markers initially
-  displayWisataMarkers(allWisataData)
+  displayWisataMarkers(allWisataData);
 
   // Populate list
-  populateWisataList(allWisataData)
+  populateWisataList(allWisataData);
 
   // Update count
-  updateWisataCount(allWisataData.length)
+  updateWisataCount(allWisataData.length);
 }
 
 function displayWisataMarkers(data) {
   // Clear existing markers
-  wisataMarkers.forEach((marker) => wisataMap.removeLayer(marker))
-  wisataMarkers = []
+  wisataMarkers.forEach((marker) => wisataMap.removeLayer(marker));
+  wisataMarkers = [];
 
   if (data.length === 0) {
-    alert("Tidak ada destinasi wisata ditemukan")
-    return
+    alert("Tidak ada destinasi wisata ditemukan");
+    return;
   }
 
   // Create markers for each destination
   data.forEach((wisata) => {
-    const icon = getCategoryIcon(wisata.kategori)
-    const marker = window.L.marker([wisata.lat, wisata.lng], { icon }).addTo(wisataMap)
+    const icon = getCategoryIcon(wisata.kategori);
+    const marker = window.L.marker([wisata.lat, wisata.lng], { icon }).addTo(
+      wisataMap,
+    );
 
     // Create custom popup with animation
-    const popupContent = createPopupContent(wisata)
+    const popupContent = createPopupContent(wisata);
     marker.bindPopup(popupContent, {
       maxWidth: 350,
       className: "wisata-popup-animated",
-    })
+    });
 
     // Store marker with data
-    marker.wisataData = wisata
-    wisataMarkers.push(marker)
-  })
+    marker.wisataData = wisata;
+    wisataMarkers.push(marker);
+  });
 
   // Fit map to show all markers
   if (data.length > 0) {
-    const group = window.L.featureGroup(wisataMarkers)
-    wisataMap.fitBounds(group.getBounds().pad(0.1))
+    const group = window.L.featureGroup(wisataMarkers);
+    wisataMap.fitBounds(group.getBounds().pad(0.1));
   }
 }
 
@@ -64,9 +66,11 @@ function createPopupContent(wisata) {
   const popupId = `popup-${wisata.id || Date.now()}`;
   return `
     <div style="min-width: 280px; max-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-      ${wisata.foto ? `
+      ${
+        wisata.foto
+          ? `
         <div style="position: relative; margin: -14px -14px 12px -14px; overflow: hidden; border-radius: 8px 8px 0 0;">
-          <img src="${wisata.foto}" alt="${wisata.nama}" 
+          <img src="${wisata.foto}" alt="${wisata.nama}"
             style="width: 100%; height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s ease;"
             onclick="window.openImageFullscreen('${wisata.foto}', '${wisata.nama}')"
             onmouseover="this.style.transform='scale(1.05)'"
@@ -74,40 +78,54 @@ function createPopupContent(wisata) {
           >
           <span style="position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.95); color: #333; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">${wisata.kategori}</span>
         </div>
-      ` : `
+      `
+          : `
         <div style="position: relative; margin: -14px -14px 12px -14px; background: linear-gradient(135deg, #64748b 0%, #475569 100%); height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 8px 8px 0 0;">
           <span style="font-size: 32px;">${getCategoryEmoji(wisata.kategori)}</span>
           <span style="position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.95); color: #333; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">${wisata.kategori}</span>
         </div>
-      `}
+      `
+      }
       <div style="padding: 0 4px;">
         <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #1e293b;">${wisata.nama}</h3>
-        <p style="margin: 0 0 12px 0; font-size: 13px; color: #64748b; line-height: 1.5;">${wisata.deskripsi || 'Tidak ada deskripsi'}</p>
+        <p style="margin: 0 0 12px 0; font-size: 13px; color: #64748b; line-height: 1.5;">${wisata.deskripsi || "Tidak ada deskripsi"}</p>
         <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
-          ${wisata.jamOperasional ? `
+          ${
+            wisata.jamOperasional
+              ? `
             <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #475569;">
               <span style="width: 20px; text-align: center;">&#128337;</span>
               <span>${wisata.jamOperasional}</span>
             </div>
-          ` : ''}
-          ${wisata.hargaTiket ? `
+          `
+              : ""
+          }
+          ${
+            wisata.hargaTiket
+              ? `
             <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #475569;">
               <span style="width: 20px; text-align: center;">&#128181;</span>
               <span>Rp ${wisata.hargaTiket}</span>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
           <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #475569;">
             <span style="width: 20px; text-align: center;">&#128205;</span>
             <span>${wisata.lat.toFixed(4)}, ${wisata.lng.toFixed(4)}</span>
           </div>
-          ${wisata.kontak ? `
+          ${
+            wisata.kontak
+              ? `
             <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #475569;">
               <span style="width: 20px; text-align: center;">&#128222;</span>
               <span>${wisata.kontak}</span>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
         </div>
-        <button onclick="window.routeToWisata(${wisata.lat}, ${wisata.lng}, '${wisata.nama.replace(/'/g, "\\'")}')" 
+        <button onclick="window.routeToWisata(${wisata.lat}, ${wisata.lng}, '${wisata.nama.replace(/'/g, "\\'")}')"
           style="margin-top: 12px; padding: 10px 16px; background: linear-gradient(135deg, #7fa998 0%, #6d8a7c 100%); color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 13px; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(127, 169, 152, 0.3);"
           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(127, 169, 152, 0.4)'"
           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(127, 169, 152, 0.3)'"
@@ -120,14 +138,14 @@ function createPopupContent(wisata) {
 }
 
 // Function to open image in fullscreen modal
-window.openImageFullscreen = function(src, title) {
+window.openImageFullscreen = function (src, title) {
   // Remove existing modal if any
-  const existingModal = document.getElementById('imageFullscreenModal');
+  const existingModal = document.getElementById("imageFullscreenModal");
   if (existingModal) existingModal.remove();
-  
+
   // Create fullscreen modal
-  const modal = document.createElement('div');
-  modal.id = 'imageFullscreenModal';
+  const modal = document.createElement("div");
+  modal.id = "imageFullscreenModal";
   modal.style.cssText = `
     position: fixed;
     top: 0;
@@ -142,7 +160,7 @@ window.openImageFullscreen = function(src, title) {
     cursor: pointer;
     animation: fadeIn 0.3s ease;
   `;
-  
+
   modal.innerHTML = `
     <style>
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -169,13 +187,13 @@ window.openImageFullscreen = function(src, title) {
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     ">&times;</button>
   `;
-  
-  modal.onclick = function(e) {
+
+  modal.onclick = function (e) {
     if (e.target === modal) modal.remove();
   };
-  
+
   document.body.appendChild(modal);
-}
+};
 
 function getCategoryIcon(kategori) {
   const iconMap = {
@@ -184,9 +202,9 @@ function getCategoryIcon(kategori) {
     Kuliner: { color: "#ef4444", emoji: "🍴" },
     Edukasi: { color: "#3b82f6", emoji: "📚" },
     Religi: { color: "#8b5cf6", emoji: "🕌" },
-  }
+  };
 
-  const iconData = iconMap[kategori] || { color: "#64748b", emoji: "📍" }
+  const iconData = iconMap[kategori] || { color: "#64748b", emoji: "📍" };
 
   return window.L.divIcon({
     html: `
@@ -213,11 +231,11 @@ function getCategoryIcon(kategori) {
     iconSize: [40, 40],
     iconAnchor: [20, 40],
     popupAnchor: [0, -40],
-  })
+  });
 }
 
 function populateWisataList(data) {
-  const listContainer = document.getElementById("wisataList")
+  const listContainer = document.getElementById("wisataList");
 
   if (data.length === 0) {
     listContainer.innerHTML = `
@@ -225,15 +243,15 @@ function populateWisataList(data) {
         <p>Belum ada destinasi wisata</p>
         <a href="admin-wisata.html" class="btn-add-wisata-small">+ Tambah Destinasi</a>
       </div>
-    `
-    return
+    `;
+    return;
   }
 
-  listContainer.innerHTML = ""
+  listContainer.innerHTML = "";
 
   data.forEach((wisata, index) => {
-    const item = document.createElement("div")
-    item.className = "wisata-list-item"
+    const item = document.createElement("div");
+    item.className = "wisata-list-item";
     item.innerHTML = `
       <div class="wisata-list-item-content">
         ${
@@ -250,24 +268,24 @@ function populateWisataList(data) {
           <span class="wisata-list-category">${wisata.kategori}</span>
         </div>
       </div>
-    `
+    `;
 
     // Click to zoom to marker and open popup
     item.onclick = () => {
-      const marker = wisataMarkers[index]
+      const marker = wisataMarkers[index];
       if (marker) {
         wisataMap.setView([wisata.lat, wisata.lng], 16, {
           animate: true,
           duration: 0.5,
-        })
+        });
         setTimeout(() => {
-          marker.openPopup()
-        }, 500)
+          marker.openPopup();
+        }, 500);
       }
-    }
+    };
 
-    listContainer.appendChild(item)
-  })
+    listContainer.appendChild(item);
+  });
 }
 
 function getCategoryEmoji(kategori) {
@@ -277,66 +295,73 @@ function getCategoryEmoji(kategori) {
     Kuliner: "🍴",
     Edukasi: "📚",
     Religi: "🕌",
-  }
-  return emojiMap[kategori] || "📍"
+  };
+  return emojiMap[kategori] || "📍";
 }
 
 function updateWisataCount(count) {
-  document.getElementById("wisataCount").textContent = count
+  document.getElementById("wisataCount").textContent = count;
 }
 
 window.searchWisataMap = () => {
-  const searchText = document.getElementById("searchWisata").value.toLowerCase().trim()
-  const selectedCategory = document.getElementById("filterKategori").value
+  const searchText = document
+    .getElementById("searchWisata")
+    .value.toLowerCase()
+    .trim();
+  const selectedCategory = document.getElementById("filterKategori").value;
 
-  let filteredData = allWisataData
+  let filteredData = allWisataData;
 
   // Filter by category
   if (selectedCategory) {
-    filteredData = filteredData.filter((w) => w.kategori === selectedCategory)
+    filteredData = filteredData.filter((w) => w.kategori === selectedCategory);
   }
 
   // Filter by name
   if (searchText) {
     filteredData = filteredData.filter(
-      (w) => w.nama.toLowerCase().includes(searchText) || w.deskripsi.toLowerCase().includes(searchText),
-    )
+      (w) =>
+        w.nama.toLowerCase().includes(searchText) ||
+        w.deskripsi.toLowerCase().includes(searchText),
+    );
   }
 
   // Display filtered results
-  displayWisataMarkers(filteredData)
-  populateWisataList(filteredData)
-  updateWisataCount(filteredData.length)
+  displayWisataMarkers(filteredData);
+  populateWisataList(filteredData);
+  updateWisataCount(filteredData.length);
 
   // Specific destination search - zoom and open popup
   if (searchText && filteredData.length === 1) {
-    const wisata = filteredData[0]
+    const wisata = filteredData[0];
     wisataMap.setView([wisata.lat, wisata.lng], 16, {
       animate: true,
       duration: 0.5,
-    })
+    });
     setTimeout(() => {
-      wisataMarkers[0].openPopup()
-    }, 500)
+      wisataMarkers[0].openPopup();
+    }, 500);
   } else if (filteredData.length === 0) {
-    alert("Tidak ada destinasi wisata yang ditemukan")
+    alert("Tidak ada destinasi wisata yang ditemukan");
   } else if (selectedCategory && !searchText) {
     // Category filter only - show info
-    alert(`Ditemukan ${filteredData.length} destinasi wisata ${selectedCategory}`)
+    alert(
+      `Ditemukan ${filteredData.length} destinasi wisata ${selectedCategory}`,
+    );
   }
-}
+};
 
 window.resetWisataSearch = () => {
-  document.getElementById("searchWisata").value = ""
-  document.getElementById("filterKategori").value = ""
+  document.getElementById("searchWisata").value = "";
+  document.getElementById("filterKategori").value = "";
 
-  displayWisataMarkers(allWisataData)
-  populateWisataList(allWisataData)
-  updateWisataCount(allWisataData.length)
-}
+  displayWisataMarkers(allWisataData);
+  populateWisataList(allWisataData);
+  updateWisataCount(allWisataData.length);
+};
 
 // Get user location for wisata map
-window.getUserLocationWisataMap = function() {
+window.getUserLocationWisataMap = function () {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -350,36 +375,42 @@ window.getUserLocationWisataMap = function() {
 
         // User icon
         const userIcon = window.L.icon({
-          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconUrl:
+            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
           iconSize: [25, 41],
           iconAnchor: [12, 41],
           popupAnchor: [1, -34],
-          shadowSize: [41, 41]
+          shadowSize: [41, 41],
         });
 
         // Add user marker
-        wisataUserMarker = window.L.marker([userLat, userLng], { icon: userIcon })
+        wisataUserMarker = window.L.marker([userLat, userLng], {
+          icon: userIcon,
+        })
           .addTo(wisataMap)
-          .bindPopup('📍 Lokasi Anda')
+          .bindPopup("📍 Lokasi Anda")
           .openPopup();
 
         // Pan to user location
         wisataMap.setView([userLat, userLng], 15);
       },
       (error) => {
-        alert('Tidak dapat mengakses lokasi Anda. Pastikan GPS aktif.');
-      }
+        alert("Tidak dapat mengakses lokasi Anda. Pastikan GPS aktif.");
+      },
     );
   } else {
-    alert('Browser Anda tidak mendukung geolocation');
+    alert("Browser Anda tidak mendukung geolocation");
   }
-}
+};
 
 // Route to wisata
-window.routeToWisata = function(lat, lng, nama) {
+window.routeToWisata = function (lat, lng, nama) {
   if (!wisataUserMarker) {
-    alert('Silakan aktifkan lokasi Anda terlebih dahulu dengan klik tombol "Lokasi Saya"');
+    alert(
+      'Silakan aktifkan lokasi Anda terlebih dahulu dengan klik tombol "Lokasi Saya"',
+    );
     return;
   }
 
@@ -394,7 +425,7 @@ window.routeToWisata = function(lat, lng, nama) {
   wisataRoutingControl = window.L.Routing.control({
     waypoints: [
       window.L.latLng(userLatLng.lat, userLatLng.lng),
-      window.L.latLng(parseFloat(lat), parseFloat(lng))
+      window.L.latLng(parseFloat(lat), parseFloat(lng)),
     ],
     routeWhileDragging: false,
     addWaypoints: false,
@@ -402,30 +433,30 @@ window.routeToWisata = function(lat, lng, nama) {
     fitSelectedRoutes: true,
     showAlternatives: false,
     lineOptions: {
-      styles: [{ color: '#7fa998', weight: 5 }]
+      styles: [{ color: "#7fa998", weight: 5 }],
     },
-    createMarker: () => null
+    createMarker: () => null,
   }).addTo(wisataMap);
 
   // Event when route is found
-  wisataRoutingControl.on('routesfound', (e) => {
+  wisataRoutingControl.on("routesfound", (e) => {
     const routes = e.routes;
     const summary = routes[0].summary;
     const distance = (summary.totalDistance / 1000).toFixed(2);
     const time = Math.round(summary.totalTime / 60);
     alert(`Rute ke ${nama}: ${distance} km, estimasi ${time} menit`);
   });
-}
+};
 
 // Clear route
-window.clearWisataRoute = function() {
+window.clearWisataRoute = function () {
   if (wisataRoutingControl) {
     wisataMap.removeControl(wisataRoutingControl);
     wisataRoutingControl = null;
   }
-}
+};
 
 // Initialize on page load
-document.addEventListener("DOMContentLoaded", () => {
-  initializeWisataMap()
-})
+document.addEventListener("DOMContentLoaded", async () => {
+  await initializeWisataMap();
+});
